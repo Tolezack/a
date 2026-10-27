@@ -1,0 +1,10 @@
+[configuration]
+entry_symbol = "skytears_cpp_post_init"
+compatibility_minimum = "4.5"
+reloadable = false
+
+[libraries]
+windows.debug.x86_64 = "./bin/skytears_cpp_post.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "./bin/skytears_cpp_post.windows.template_release.x86_64.dll"
+linux.debug.x86_64 = "./bin/libskytears_cpp_post.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "./bin/libskytears_cpp_post.linux.template_release.x86_64.so"
