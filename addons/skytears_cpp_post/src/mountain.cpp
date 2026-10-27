@@ -25,9 +25,9 @@ float smooth(float a,float b,float x){
     float t=std::clamp((x-a)/std::max(b-a,0.0001f),0.f,1.f);
     return t*t*(3.f-2.f*t);
 }
-struct Noise {
+struct MountainNoiseState {
     Ref<FastNoiseLite> region,warp,hills,ridges,density,arches,zones;
-    explicit Noise(int s){
+    explicit MountainNoiseState(int s){
         region=make_noise(s^0x25B71,0.00085f,3);
         warp=make_noise(s^0x29FC3,0.00160f,2);
         hills=make_noise(s^0xA1E73,0.00240f,3);
@@ -47,7 +47,7 @@ bool tree_part(uint8_t id){return id==WOOD||id==WOOD_X||id==WOOD_Z||id==LEAVES||
 struct Root{int x,y,z;};
 struct Part{int idx,root;uint8_t id;};
 struct Relief{int rise;float peaks;};
-Relief height_add(const Noise &n,float x,float z,int base,float strength,float flatland) {
+Relief height_add(const MountainNoiseState &n,float x,float z,int base,float strength,float flatland) {
     float macro=n.macro(x,z);
     float foothills=smooth(flatland,flatland+0.18f,macro);
     if(foothills<0.025f)return {0,0.f};
@@ -77,13 +77,13 @@ Dictionary SkyTearsNativeTerrainPost::apply_mountain(PackedByteArray source,Vect
     bool arches_enabled=bool(opts.get("noise3d_arches_enabled",true));
     // Cache Godot FastNoiseLite resources between chunks for the same seed.
     static thread_local int32_t cache_seed = 0;
-    static thread_local std::unique_ptr<Noise> cached;
+    static thread_local std::unique_ptr<MountainNoiseState> cached;
     const int32_t wanted_seed = int32_t(seed);
     if (!cached || wanted_seed != cache_seed) {
-        cached = std::make_unique<Noise>(wanted_seed);
+        cached = std::make_unique<MountainNoiseState>(wanted_seed);
         cache_seed = wanted_seed;
     }
-    const Noise &noise = *cached;
+    const MountainNoiseState &noise = *cached;
     float max_macro=0.f;
     for(int sz:{0,16,31})for(int sx:{0,16,31}){
         max_macro=std::max(max_macro,noise.macro(float(chunk.x*W+sx),float(chunk.y*W+sz)));
