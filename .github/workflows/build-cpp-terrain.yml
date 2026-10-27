@@ -1,0 +1,39 @@
+name: Build SkyTears C++ geology and Noise3D
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: windows
+          - os: ubuntu-24.04
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install SCons
+        run: python -m pip install scons
+      - name: Get matching Godot C++ bindings
+        shell: bash
+        run: git clone --depth 1 --branch 4.5 https://github.com/godotengine/godot-cpp.git addons/skytears_cpp_post/godot-cpp
+      - name: Build release and editor binaries
+        shell: bash
+        working-directory: addons/skytears_cpp_post
+        run: |
+          scons platform=${{ matrix.platform }} target=template_release -j2
+          scons platform=${{ matrix.platform }} target=template_debug -j2
+          cp skytears_cpp_post.gdextension.disabled skytears_cpp_post.gdextension
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SkyTears-NativePost-${{ matrix.platform }}
+          path: |
+            addons/skytears_cpp_post/bin/*
+            addons/skytears_cpp_post/skytears_cpp_post.gdextension
+          if-no-files-found: error
